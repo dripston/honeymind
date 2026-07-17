@@ -1,0 +1,32 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Node
+node_modules/
+dist/
+build/
+.npm/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specifics
+backend/dataset.csv
+backend/attackers/*.csv
+backend/attackers/*.pkl
+backend/attackers/victim_info.json
+backend/victim_api/victim_access.log
+backend/gateway/gateway_access.log
