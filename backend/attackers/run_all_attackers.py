@@ -94,7 +94,8 @@ def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--attack", type=str, required=True, help="knockoff, jbda, analytical, evolutionary, eval, legitimate")
-    parser.add_argument("--target", type=str, required=True, help="Target URL (8000 or 8001)")
+    parser.add_argument("--target", type=str, required=True, help="Target URL")
+    parser.add_argument("--mode", type=str, required=True, help="'undefended' or 'defended'")
     parser.add_argument("--include", type=str, default="knockoff,jbda,analytical,evolutionary", help="Comma separated list of attacks to include in eval")
     args = parser.parse_args()
 
@@ -134,7 +135,7 @@ def main():
 
         included_keys = [k.strip() for k in args.include.split(",")]
 
-        prefix = "undefended_" if "8000" in args.target else "defended_"
+        prefix = "undefended_" if args.mode == "undefended" else "defended_"
         for key in ["knockoff", "jbda", "analytical", "evolutionary"]:
             if key not in attack_map: continue
             name, script, csv_file = attack_map[key]
@@ -163,7 +164,7 @@ def main():
     name, script, csv_file = attack_map[args.attack]
     target_url = args.target
 
-    prefix = "undefended_" if "8000" in target_url else "defended_"
+    prefix = "undefended_" if args.mode == "undefended" else "defended_"
     csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{prefix}{csv_file}")
 
     print("=" * 60)

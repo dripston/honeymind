@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import './index.css';
 
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://127.0.0.1:8001";
+
 function TerminalWindow({ output, large }) {
   const containerRef = useRef(null);
 
@@ -56,7 +58,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statsRes = await fetch('http://127.0.0.1:8001/api/v1/stats');
+        const statsRes = await fetch(`${GATEWAY_URL}/api/v1/stats`);
         setStats(await statsRes.json());
       } catch (err) {}
     };
@@ -67,9 +69,9 @@ function App() {
 
   // Victim Logs
   useEffect(() => {
-    const ev1 = new EventSource('http://127.0.0.1:8001/api/v1/control/victim_logs');
+    const ev1 = new EventSource(`${GATEWAY_URL}/api/v1/control/victim_logs`);
     ev1.onmessage = (event) => setVictimLogs(prev => [...prev.slice(-49), event.data]);
-    const ev2 = new EventSource('http://127.0.0.1:8001/api/v1/control/gateway_logs');
+    const ev2 = new EventSource(`${GATEWAY_URL}/api/v1/control/gateway_logs`);
     ev2.onmessage = (event) => setGatewayLogs(prev => [...prev.slice(-49), event.data]);
     return () => { ev1.close(); ev2.close(); };
   }, []);
@@ -77,19 +79,13 @@ function App() {
   const toggleDefense = async () => {
     const newState = !defenseEnabled;
     setDefenseEnabled(newState);
-    try { await fetch(`http://127.0.0.1:8001/api/v1/control/toggle?enabled=${newState}`, { method: 'POST' }); }
+    try { await fetch(`${GATEWAY_URL}/api/v1/control/toggle?enabled=${newState}`, { method: 'POST' }); }
     catch (err) {}
   };
 
-  const baseUrls = ['http://127.0.0.1:8001', 'http://127.0.0.2:8001', 'http://127.0.0.3:8001', 'http://localhost:8001'];
-  const currentBaseIndex = useRef(0);
-
   const streamProcess = (endpoint, setOutput) => {
-    const baseUrl = baseUrls[currentBaseIndex.current % baseUrls.length];
-    currentBaseIndex.current++;
-
-    setOutput([`> Executing: ${endpoint} via ${baseUrl}...`]);
-    const eventSource = new EventSource(`${baseUrl}/api/v1/control/${endpoint}`);
+    setOutput([`> Executing: ${endpoint}...`]);
+    const eventSource = new EventSource(`${GATEWAY_URL}/api/v1/control/${endpoint}`);
     eventSource.onmessage = (event) => {
       if (event.data === '[PROCESS_COMPLETE]') {
         eventSource.close();
