@@ -30,6 +30,5 @@ backend/attackers/*.pkl
 backend/attackers/victim_info.json
 backend/victim_api/victim_access.log
 backend/gateway/gateway_access.log
-dataset.csv
 honeymind.db  
  
