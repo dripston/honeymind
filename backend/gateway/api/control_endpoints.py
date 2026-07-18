@@ -124,8 +124,14 @@ async def stream_victim_logs():
             f.write("Victim API Access Log Initialized...\n")
 
     async def log_generator():
+        import os
+        if os.name == 'nt':
+            cmd = ["powershell", "-NoProfile", "-Command", f"Get-Content -Path '{log_path}' -Wait -Tail 0"]
+        else:
+            cmd = ["tail", "-f", "-n", "0", log_path]
+            
         process = await asyncio.create_subprocess_exec(
-            "powershell", "-NoProfile", "-Command", f"Get-Content -Path '{log_path}' -Wait -Tail 0",
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT
         )
@@ -154,8 +160,14 @@ async def stream_gateway_logs():
             f.write("HoneyMind AI Gateway Log Initialized...\n")
 
     async def log_generator():
+        import os
+        if os.name == 'nt':
+            cmd = ["powershell", "-NoProfile", "-Command", f"Get-Content -Path '{log_path}' -Wait -Tail 0"]
+        else:
+            cmd = ["tail", "-f", "-n", "0", log_path]
+            
         process = await asyncio.create_subprocess_exec(
-            "powershell", "-NoProfile", "-Command", f"Get-Content -Path '{log_path}' -Wait -Tail 0",
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT
         )
