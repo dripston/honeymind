@@ -62,8 +62,8 @@ async def trigger_specific_attack(attack_type: str, target_mode: str):
     script_path = os.path.join(os.path.dirname(__file__), "..", "..", "attackers", "run_all_attackers.py")
     cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     
-    victim_url = os.environ.get("VICTIM_URL", "http://127.0.0.1:8000")
-    gateway_url = os.environ.get("GATEWAY_URL", "http://127.0.0.1:8001")
+    victim_url = os.environ.get("VICTIM_URL", "http://127.0.0.1:8000").rstrip('/')
+    gateway_url = os.environ.get("GATEWAY_URL", "http://127.0.0.1:8001").rstrip('/')
     target_url = f"{victim_url}/api/v1/predict" if target_mode == "undefended" else f"{gateway_url}/api/v1/predict"
     args = ["--attack", attack_type, "--target", target_url, "--mode", target_mode]
     
@@ -77,8 +77,8 @@ async def trigger_eval(target_mode: str, include: str = "knockoff,jbda,analytica
     script_path = os.path.join(os.path.dirname(__file__), "..", "..", "attackers", "run_all_attackers.py")
     cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     
-    victim_url = os.environ.get("VICTIM_URL", "http://127.0.0.1:8000")
-    gateway_url = os.environ.get("GATEWAY_URL", "http://127.0.0.1:8001")
+    victim_url = os.environ.get("VICTIM_URL", "http://127.0.0.1:8000").rstrip('/')
+    gateway_url = os.environ.get("GATEWAY_URL", "http://127.0.0.1:8001").rstrip('/')
     target_url = f"{victim_url}/api/v1/predict" if target_mode == "undefended" else f"{gateway_url}/api/v1/predict"
     args = ["--attack", "eval", "--target", target_url, "--mode", target_mode, "--include", include]
     

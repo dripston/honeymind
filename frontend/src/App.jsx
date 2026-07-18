@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './index.css';
 
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || "http://127.0.0.1:8001";
+const GATEWAY_URL = (import.meta.env.VITE_GATEWAY_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
 
 function TerminalWindow({ output, large }) {
   const containerRef = useRef(null);
