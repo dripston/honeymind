@@ -9,9 +9,11 @@ router = APIRouter()
 # Global flag to toggle deception on or off
 # By default, we leave it ON, but the UI can change it.
 global_state = {
-    "HONEYMIND_ENABLED": True,
-    "TASK_RUNNING": False
+    "HONEYMIND_ENABLED": True
 }
+
+import asyncio
+execution_lock = asyncio.Lock()
 
 @router.post("/toggle", summary="Toggle HoneyMind Defense")
 async def toggle_defense(enabled: bool):
@@ -20,46 +22,45 @@ async def toggle_defense(enabled: bool):
 
 async def run_script_and_stream(script_path: str, cwd: str, args: list = None):
     """Generator that runs a script and yields its stdout line-by-line for SSE."""
-    import asyncio
-    if global_state.get("TASK_RUNNING"):
-        yield "data: [ERROR] Server is busy running another task! Please wait for it to finish to prevent server crashes.\n\n"
-        yield "data: [PROCESS_COMPLETE]\n\n"
-        return
+    if execution_lock.locked():
+        yield "data: [INFO] Server is busy running another task. Added to Queue. Waiting for your turn...\n\n"
 
-    global_state["TASK_RUNNING"] = True
-    try:
-        cmd_args = [sys.executable, "-u", script_path]
-        if args:
-            cmd_args.extend(args)
-            
-        process = await asyncio.create_subprocess_exec(
-            *cmd_args,
-            cwd=cwd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT
-        )
-        
+    async with execution_lock:
         try:
-            while True:
-                line = await process.stdout.readline()
-                if not line:
-                    break
-                yield f"data: {line.decode('utf-8', errors='replace')}\n\n"
-            yield f"data: [PROCESS_COMPLETE]\n\n"
-        except asyncio.CancelledError:
-            # Handle client disconnect (page reload)
-            pass
-        finally:
+            cmd_args = [sys.executable, "-u", script_path]
+            if args:
+                cmd_args.extend(args)
+                
+            process = await asyncio.create_subprocess_exec(
+                *cmd_args,
+                cwd=cwd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT
+            )
+            
             try:
-                if os.name == 'nt':
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                else:
-                    process.terminate()
-                await process.wait()
-            except Exception:
+                while True:
+                    line = await process.stdout.readline()
+                    if not line:
+                        break
+                    yield f"data: {line.decode('utf-8', errors='replace')}\n\n"
+                yield f"data: [PROCESS_COMPLETE]\n\n"
+            except asyncio.CancelledError:
+                # Handle client disconnect (page reload)
                 pass
-    finally:
-        global_state["TASK_RUNNING"] = False
+            finally:
+                try:
+                    if os.name == 'nt':
+                        import subprocess
+                        subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    else:
+                        process.terminate()
+                    await process.wait()
+                except Exception:
+                    pass
+        except Exception as e:
+            yield f"data: [ERROR] Task failed: {str(e)}\n\n"
+            yield f"data: [PROCESS_COMPLETE]\n\n"
 
 @router.get("/train", summary="Stream Victim Model Training")
 async def trigger_training():
