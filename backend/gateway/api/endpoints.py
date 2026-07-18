@@ -32,8 +32,8 @@ ATTACK_LABELS = {
     4: "Evolutionary Boundary"
 }
 
-# In a real app, this would come from env vars
-VICTIM_API_URL = "http://127.0.0.1:8000/api/v1/predict"
+victim_base = os.environ.get("VICTIM_URL", "http://127.0.0.1:8000").rstrip('/')
+VICTIM_API_URL = f"{victim_base}/api/v1/predict"
 
 @router.get("/health", summary="Gateway Health Check")
 async def health_check():
