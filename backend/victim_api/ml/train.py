@@ -13,9 +13,12 @@ MODEL_PATH = os.path.join(MODEL_DIR, "fraud_model.pkl")
 
 def get_real_data():
     print("Loading Financial Fraud dataset (10,000 records, 50/50 balance)...")
-    dataset_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(MODEL_DIR))), "dataset.csv")
+    dataset_path = os.path.abspath(os.path.join(MODEL_DIR, "..", "..", "..", "dataset.csv"))
     if not os.path.exists(dataset_path):
-        dataset_path = os.path.join(os.path.dirname(MODEL_DIR), "..", "..", "dataset.csv")
+        print("Dataset missing! Downloading and generating now...")
+        import subprocess, sys
+        script_path = os.path.join(os.path.dirname(dataset_path), "download_dataset.py")
+        subprocess.run([sys.executable, script_path], check=True)
     
     df = pd.read_csv(dataset_path)
     X = df.drop(columns=["Class"])

@@ -115,7 +115,13 @@ def main():
         with open(info_path, "r") as f:
             info = json.load(f)
 
-        dataset_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "dataset.csv")
+        dataset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "dataset.csv"))
+        if not os.path.exists(dataset_path):
+            print("Dataset missing! Downloading and generating now...")
+            import subprocess, sys
+            script_path = os.path.join(os.path.dirname(dataset_path), "download_dataset.py")
+            subprocess.run([sys.executable, script_path], check=True)
+            
         df = pd.read_csv(dataset_path)
         df = df.sample(n=min(5000, len(df)), random_state=42)
         X = df.drop(columns=["Class"])
