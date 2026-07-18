@@ -8,7 +8,7 @@ against the real victim model.
 FULLY GENERIC: Uses per-feature mean/std from discovery. No hardcoded ranges or feature names.
 """
 import os
-import subprocess
+import runpy
 import pandas as pd
 import numpy as np
 import json
@@ -80,11 +80,29 @@ def run_bots(target_url, prefix=""):
     for name, script, csv_file in ATTACKERS:
         output_csv = f"{prefix}{csv_file}"
         print(f"\n--- Running {name} against {target_url} ---")
-        subprocess.run([sys.executable, "-u", script, target_url, output_csv], cwd=os.path.dirname(os.path.abspath(__file__)))
+        import sys
+        old_argv = sys.argv
+        sys.argv = [script, target_url, output_csv]
+        try:
+            runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), script), run_name="__main__")
+        except SystemExit as e:
+            if e.code != 0:
+                print(f"[*] Script exited with code {e.code}")
+        finally:
+            sys.argv = old_argv
 
 def run_discovery(target_url):
     script = "discovery.py"
-    subprocess.run([sys.executable, "-u", script, target_url], cwd=os.path.dirname(os.path.abspath(__file__)))
+    import sys
+    old_argv = sys.argv
+    sys.argv = [script, target_url]
+    try:
+        runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), script), run_name="__main__")
+    except SystemExit as e:
+        if e.code != 0:
+            print(f"[*] Discovery exited with code {e.code}")
+    finally:
+        sys.argv = old_argv
 
 def main():
     print("=" * 60)
@@ -118,8 +136,16 @@ def main():
         dataset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "dataset.csv"))
         if not os.path.exists(dataset_path):
             print("Dataset missing! Downloading and generating now...")
+            import sys
+            old_argv = sys.argv
             script_path = os.path.join(os.path.dirname(dataset_path), "download_dataset.py")
-            subprocess.run([sys.executable, script_path], check=True)
+            sys.argv = [script_path]
+            try:
+                runpy.run_path(script_path, run_name="__main__")
+            except SystemExit as e:
+                pass
+            finally:
+                sys.argv = old_argv
             
         df = pd.read_csv(dataset_path)
         df = df.sample(n=min(5000, len(df)), random_state=42)
@@ -178,7 +204,16 @@ def main():
 
     if args.attack == "legitimate":
         print(f"\n[PHASE 3] Launching Legitimate Client Traffic Simulator...")
-        subprocess.run([sys.executable, "-u", script, target_url], cwd=os.path.dirname(os.path.abspath(__file__)))
+        import sys
+        old_argv = sys.argv
+        sys.argv = [script, target_url]
+        try:
+            runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), script), run_name="__main__")
+        except SystemExit as e:
+            if e.code != 0:
+                print(f"[*] Legitimate Client exited with code {e.code}")
+        finally:
+            sys.argv = old_argv
         return
 
     # ─── Step 1: Discovery Phase ───
@@ -187,7 +222,16 @@ def main():
 
     # ─── Step 2: Run specific attacker ───
     print(f"\n[PHASE 3] Launching Extraction Attack against {target_url}...")
-    subprocess.run([sys.executable, "-u", script, target_url, csv_path], cwd=os.path.dirname(os.path.abspath(__file__)))
+    import sys
+    old_argv = sys.argv
+    sys.argv = [script, target_url, csv_path]
+    try:
+        runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), script), run_name="__main__")
+    except SystemExit as e:
+        if e.code != 0:
+            print(f"[*] Attack Script exited with code {e.code}")
+    finally:
+        sys.argv = old_argv
     print("\n[+] Data Extraction Complete. Run Stolen Model Training to evaluate.")
 
 if __name__ == "__main__":
