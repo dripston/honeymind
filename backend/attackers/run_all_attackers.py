@@ -118,7 +118,6 @@ def main():
         dataset_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "dataset.csv"))
         if not os.path.exists(dataset_path):
             print("Dataset missing! Downloading and generating now...")
-            import subprocess, sys
             script_path = os.path.join(os.path.dirname(dataset_path), "download_dataset.py")
             subprocess.run([sys.executable, script_path], check=True)
             
